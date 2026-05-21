@@ -4,7 +4,7 @@ dotenv.config();
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import http from 'http';
+import http from 'node:http';
 import authRoutes from './routes/auth.routes';
 import stockRoutes from './routes/stock.routes';
 import alertRoutes from './routes/alert.routes';
@@ -20,7 +20,7 @@ const server = http.createServer(app);
 initFirebase();
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000' }));
 app.use(express.json());
 
 // MongoDB connection

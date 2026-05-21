@@ -5,7 +5,11 @@ export interface AuthRequest extends Request {
   userId?: string;
 }
 
-export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authMiddleware = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): void => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
 
   if (!token) {
@@ -14,8 +18,8 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
-    req.userId = decoded.id;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    req.userId = (decoded as any).id;
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token.' });

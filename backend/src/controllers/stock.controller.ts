@@ -22,7 +22,8 @@ export const addStock = async (
     subscribeToStock(symbol.toUpperCase());
 
     res.status(201).json(stock);
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error('Error adding stock:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -34,7 +35,8 @@ export const getStocks = async (
   try {
     const stocks = await Stock.find({ userId: req.userId });
     res.json(stocks);
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error('Error fetching stocks:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -56,7 +58,8 @@ export const removeStock = async (
     }
 
     res.json({ message: 'Stock removed' });
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error('Error removing stock:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

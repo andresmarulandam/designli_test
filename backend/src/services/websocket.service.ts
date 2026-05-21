@@ -1,6 +1,10 @@
 import { WebSocketServer, WebSocket as WSWebSocket } from 'ws';
-import { Server } from 'http';
-import { subscribeToUpdates, subscribeToStock, unsubscribeFromStock } from './finnhub.service';
+import { Server } from 'node:http';
+import {
+  subscribeToUpdates,
+  subscribeToStock,
+  unsubscribeFromStock,
+} from './finnhub.service';
 
 let wss: WebSocketServer | null = null;
 

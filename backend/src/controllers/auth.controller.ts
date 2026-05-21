@@ -15,10 +15,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const user = new User({ email, password });
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
+      expiresIn: '7d',
+    });
 
     res.status(201).json({ token, user: { id: user._id, email: user.email } });
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error('Error registering user:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -39,10 +42,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
+      expiresIn: '7d',
+    });
 
     res.json({ token, user: { id: user._id, email: user.email } });
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error('Error logging in user:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

@@ -1,6 +1,5 @@
 import admin from 'firebase-admin';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
 
 let initialized = false;
 
@@ -11,7 +10,9 @@ export const initFirebase = (): void => {
     const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
 
     if (serviceAccountPath && fs.existsSync(serviceAccountPath)) {
-      const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+      const serviceAccount = JSON.parse(
+        fs.readFileSync(serviceAccountPath, 'utf8'),
+      );
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
@@ -28,7 +29,12 @@ export const initFirebase = (): void => {
   }
 };
 
-export const sendPriceAlertNotification = async (fcmToken: string, symbol: string, currentPrice: number, targetPrice: number): Promise<void> => {
+export const sendPriceAlertNotification = async (
+  fcmToken: string,
+  symbol: string,
+  currentPrice: number,
+  targetPrice: number,
+): Promise<void> => {
   try {
     await admin.messaging().send({
       token: fcmToken,
