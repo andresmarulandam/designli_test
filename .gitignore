@@ -6,3 +6,9 @@ dist/
 coverage/
 .vscode/
 .idea/
+
+# Firebase credentials
+firebase-service-account.json
+google-services.json
+*/firebase-service-account.json
+*/google-services.json
