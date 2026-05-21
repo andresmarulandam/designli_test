@@ -24,12 +24,13 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI as string)
+mongoose
+  .connect(process.env.MONGO_URI as string)
   .then(() => {
     console.log('MongoDB connected');
     connectFinnhubWebSocket();
   })
-  .catch(err => console.error('MongoDB error:', err));
+  .catch((err) => console.error('MongoDB error:', err));
 
 // Routes
 app.get('/api/health', (req: Request, res: Response) => {
