@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../store/authStore';
 import { colors, spacing, borderRadius } from '../theme/colors';
 
@@ -18,24 +19,38 @@ export const SettingsScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.profileCard}>
-        <Text style={styles.label}>Email</Text>
-        <Text style={styles.email}>{user?.email}</Text>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Settings</Text>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.profileCard}>
+          <Text style={styles.label}>Email</Text>
+          <Text style={styles.email}>{user?.email}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     padding: spacing.md,
+  },
+  title: {
+    color: colors.textPrimary,
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: spacing.lg,
   },
   profileCard: {
     backgroundColor: colors.card,

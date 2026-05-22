@@ -6,6 +6,7 @@ const API_URL = 'http://10.0.2.2:3000/api';
 const api = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 10000,
 });
 
 api.interceptors.request.use(async (config) => {
@@ -41,6 +42,8 @@ export const alertApi = {
 export const finnhubApi = {
   getQuote: (symbol: string) => api.get(`/finnhub/quote/${symbol}`),
   getCandles: (symbol: string) => api.get(`/finnhub/candles/${symbol}`),
+  search: (query: string) => api.get(`/finnhub/search/${query}`),
+  getPopular: () => api.get('/finnhub/popular'),
 };
 
 export default api;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -24,52 +25,59 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.logo}>DesignLI</Text>
-          <Text style={styles.subtitle}>Stock Tracker</Text>
-        </View>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <Text style={styles.logo}>DesignLI</Text>
+            <Text style={styles.subtitle}>Stock Tracker</Text>
+          </View>
 
-        <View style={styles.form}>
-          <Input
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <Input
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Enter your password"
-            secureTextEntry
-            autoCapitalize="none"
-          />
+          <View style={styles.form}>
+            <Input
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Enter your email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <Input
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter your password"
+              secureTextEntry
+              autoCapitalize="none"
+            />
 
-          <Button
-            title={isRegister ? 'Create Account' : 'Login'}
-            onPress={handleSubmit}
-            loading={loading}
-          />
+            <Button
+              title={isRegister ? 'Create Account' : 'Login'}
+              onPress={handleSubmit}
+              loading={loading}
+            />
 
-          <Button
-            title={isRegister ? 'Already have an account? Login' : "Don't have an account? Register"}
-            onPress={() => setIsRegister(!isRegister)}
-            variant="outline"
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
+            <View style={{ height: spacing.sm }} />
+
+            <Button
+              title={isRegister ? 'Already have an account? Login' : "Don't have an account? Register"}
+              onPress={() => setIsRegister(!isRegister)}
+              variant="outline"
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>);
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,

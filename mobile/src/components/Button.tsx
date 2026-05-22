@@ -56,9 +56,9 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -75,17 +75,17 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: colors.background,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   dangerText: {
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   outlineText: {
     color: colors.primary,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   disabledButton: {
