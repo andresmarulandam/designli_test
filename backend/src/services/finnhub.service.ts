@@ -155,10 +155,18 @@ export const getStockQuote = async (symbol: string): Promise<any> => {
 };
 
 export const searchStocks = async (query: string): Promise<any> => {
-  const response = await axios.get(`${FINNHUB_REST_URL}/search`, {
-    params: { q: query, token: FINNHUB_API_KEY },
-  });
-  return response.data;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await axios.get(`${FINNHUB_REST_URL}/search`, {
+      params: { q: query, token: FINNHUB_API_KEY },
+      signal: controller.signal,
+    });
+    return response.data;
+  } finally {
+    clearTimeout(timeout);
+  }
 };
 
 export const getPopularStocks = async (): Promise<any[]> => {

@@ -10,7 +10,7 @@ import { registerForPushNotifications, setupNotificationListeners } from './src/
 import { colors } from './src/theme/colors';
 
 LogBox.ignoreLogs([
-  'InteractionManager',
+  'InteractionManager has been deprecated',
   'Non-serializable values were found in the navigation state',
   'Each child in a list should have a unique "key" prop',
 ]);

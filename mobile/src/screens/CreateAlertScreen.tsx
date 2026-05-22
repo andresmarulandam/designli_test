@@ -26,7 +26,7 @@ export const CreateAlertScreen: React.FC<{ navigation: any; route?: { params: { 
     try {
       await createAlert(symbol.trim(), price);
       Alert.alert('Success', 'Alert created successfully');
-      navigation.goBack();
+      navigation.navigate('AlertsList');
     } catch (error) {
       Alert.alert('Error', 'Failed to create alert');
     }
@@ -56,7 +56,7 @@ export const CreateAlertScreen: React.FC<{ navigation: any; route?: { params: { 
 
           <Button title="Create Alert" onPress={handleCreate} />
           <View style={{ height: spacing.sm }} />
-          <Button title="Cancel" onPress={() => navigation.goBack()} variant="outline" />
+          <Button title="Cancel" onPress={() => navigation.navigate('AlertsList')} variant="outline" />
         </View>
       </ScrollView>
     </SafeAreaView>
