@@ -11,5 +11,19 @@ services:
     environment:
       MONGO_INITDB_DATABASE: designli-stocks
 
+  backend:
+    build: ./backend
+    container_name: designli-backend
+    ports:
+      - '3000:3000'
+    env_file: ./backend/.env
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/designli
+    volumes:
+      - ./backend/firebase-service-account.json:/app/firebase-service-account.json:ro
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
 volumes:
   mongo-data:
