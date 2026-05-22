@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import { Ionicons } from '@expo/vector-icons';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { StockDetailScreen } from '../screens/StockDetailScreen';
 import { AlertsListScreen } from '../screens/AlertsListScreen';
@@ -47,17 +48,32 @@ export const AppNavigator: React.FC = () => (
     <Tab.Screen
       name="Dashboard"
       component={DashboardNavigator}
-      options={{ tabBarLabel: 'Dashboard' }}
+      options={{
+        tabBarLabel: 'Dashboard',
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name="grid-outline" size={size} color={color} />
+        ),
+      }}
     />
     <Tab.Screen
       name="Alerts"
       component={AlertsNavigator}
-      options={{ tabBarLabel: 'Alerts' }}
+      options={{
+        tabBarLabel: 'Alerts',
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name="notifications-outline" size={size} color={color} />
+        ),
+      }}
     />
     <Tab.Screen
       name="Settings"
       component={SettingsScreen}
-      options={{ tabBarLabel: 'Settings' }}
+      options={{
+        tabBarLabel: 'Settings',
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name="settings-outline" size={size} color={color} />
+        ),
+      }}
     />
   </Tab.Navigator>
 );

@@ -1,28 +1,50 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { finnhubApi } from '../services/api';
 import { StockChart } from '../components/StockChart';
+import { Button } from '../components/Button';
 import { colors, spacing, borderRadius } from '../theme/colors';
 import type { StockQuote } from '../types';
 
 interface StockDetailScreenProps {
   route?: { params: { symbol: string } };
+  navigation?: any;
 }
 
-export const StockDetailScreen: React.FC<StockDetailScreenProps> = ({ route }) => {
+export const StockDetailScreen: React.FC<StockDetailScreenProps> = ({
+  route,
+  navigation,
+}) => {
   const symbol = route?.params?.symbol || '';
   const [quote, setQuote] = useState<StockQuote | null>(null);
-  const [candles, setCandles] = useState<{ price: number; timestamp: string }[]>([]);
+  const [candles, setCandles] = useState<
+    { price: number; timestamp: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      const timeout = setTimeout(() => {
+        setLoading(false);
+      }, 8000);
+
       try {
         const { data } = await finnhubApi.getQuote(symbol);
+        clearTimeout(timeout);
         setQuote(data);
       } catch (error) {
+        clearTimeout(timeout);
         console.error('Failed to fetch quote:', error);
       } finally {
+        clearTimeout(timeout);
         setLoading(false);
       }
     };
@@ -41,57 +63,83 @@ export const StockDetailScreen: React.FC<StockDetailScreenProps> = ({ route }) =
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   const isPositive = quote ? quote.d >= 0 : true;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.symbol}>{symbol}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        nestedScrollEnabled
+      >
+        <View style={styles.header}>
+          <Text style={styles.symbol}>{symbol}</Text>
+          <Text style={styles.price}>
+            ${quote?.c.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </Text>
+          {quote && (
+            <Text
+              style={[
+                styles.change,
+                isPositive ? styles.positive : styles.negative,
+              ]}
+            >
+              {isPositive ? '+' : ''}
+              {quote.d.toFixed(2)} ({isPositive ? '+' : ''}
+              {quote.dp.toFixed(2)}%)
+            </Text>
+          )}
+        </View>
+
         {quote && (
-          <View>
-            <Text style={styles.price}>
-              ${quote.c.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </Text>
-            <Text style={[styles.change, isPositive ? styles.positive : styles.negative]}>
-              {isPositive ? '+' : ''}{quote.d.toFixed(2)} ({isPositive ? '+' : ''}{quote.dp.toFixed(2)}%)
-            </Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>Open</Text>
+              <Text style={styles.statValue}>{quote.o.toFixed(2)}</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>High</Text>
+              <Text style={styles.statValue}>{quote.h.toFixed(2)}</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>Low</Text>
+              <Text style={styles.statValue}>{quote.l.toFixed(2)}</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>Prev Close</Text>
+              <Text style={styles.statValue}>{quote.pc.toFixed(2)}</Text>
+            </View>
           </View>
         )}
-      </View>
 
-      {quote && (
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Open</Text>
-            <Text style={styles.statValue}>${quote.o.toFixed(2)}</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>High</Text>
-            <Text style={styles.statValue}>${quote.h.toFixed(2)}</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Low</Text>
-            <Text style={styles.statValue}>${quote.l.toFixed(2)}</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Prev Close</Text>
-            <Text style={styles.statValue}>${quote.pc.toFixed(2)}</Text>
-          </View>
-        </View>
-      )}
+        <StockChart data={candles} symbol={symbol} />
 
-      <StockChart data={candles} symbol={symbol} />
-    </ScrollView>
+        <Button
+          title="Set Price Alert"
+          onPress={() =>
+            navigation?.navigate('Alerts', {
+              screen: 'CreateAlert',
+              params: { symbol },
+            })
+          }
+          variant="outline"
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -117,6 +165,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 36,
     fontWeight: '700',
+    marginBottom: spacing.xs,
   },
   change: {
     fontSize: 18,

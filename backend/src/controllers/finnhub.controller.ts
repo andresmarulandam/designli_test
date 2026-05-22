@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { getStockQuote, getStockCandles } from '../services/finnhub.service';
+import { getStockQuote, getStockCandles, searchStocks, getPopularStocks } from '../services/finnhub.service';
 
 export const getQuote = async (
   req: AuthRequest,
@@ -27,5 +27,32 @@ export const getCandles = async (
   } catch (error) {
     console.error('Candles error:', error);
     res.status(500).json({ error: 'Failed to fetch candles' });
+  }
+};
+
+export const search = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { query } = req.params;
+    const result = await searchStocks(query);
+    res.json(result);
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ error: 'Failed to search stocks' });
+  }
+};
+
+export const popular = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const stocks = await getPopularStocks();
+    res.json(stocks);
+  } catch (error) {
+    console.error('Popular stocks error:', error);
+    res.status(500).json({ error: 'Failed to fetch popular stocks' });
   }
 };

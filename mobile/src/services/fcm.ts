@@ -14,7 +14,7 @@ Notifications.setNotificationHandler({
 
 export const registerForPushNotifications = async () => {
   if (!Device.isDevice) {
-    console.log('Must use physical device for push notifications');
+    console.log('Push notifications require a physical device or emulator with Google Play Services');
     return;
   }
 
@@ -31,16 +31,21 @@ export const registerForPushNotifications = async () => {
     return;
   }
 
-  const token = (await Notifications.getExpoPushTokenAsync()).data;
-  console.log('FCM Token:', token);
-
   try {
-    await authApi.saveFcmToken(token);
-  } catch (error) {
-    console.error('Failed to save FCM token:', error);
-  }
+    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    console.log('FCM Token:', token);
 
-  return token;
+    try {
+      await authApi.saveFcmToken(token);
+    } catch (error) {
+      console.error('Failed to save FCM token:', error);
+    }
+
+    return token;
+  } catch (error) {
+    console.log('Push notifications not available on this device');
+    return;
+  }
 };
 
 export const setupNotificationListeners = () => {

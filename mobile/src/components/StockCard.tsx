@@ -34,7 +34,7 @@ export const StockCard: React.FC<StockCardProps> = ({
       </View>
       <View style={styles.priceRow}>
         <Text style={styles.price}>
-          {currentPrice ? `$${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : 'Loading...'}
+          {currentPrice ? `$${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '--'}
         </Text>
         {currentPrice && (
           <View style={[styles.changeBadge, isPositive ? styles.positiveBadge : styles.negativeBadge]}>

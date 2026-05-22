@@ -140,12 +140,40 @@ const checkAlerts = async (symbol: string, price: number): Promise<void> => {
 };
 
 export const getStockQuote = async (symbol: string): Promise<any> => {
-  const response = await axios.get(`${FINNHUB_REST_URL}/quote`, {
-    params: { symbol, token: FINNHUB_API_KEY },
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await axios.get(`${FINNHUB_REST_URL}/quote`, {
+      params: { symbol, token: FINNHUB_API_KEY },
+      signal: controller.signal,
+    });
+    return response.data;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+export const searchStocks = async (query: string): Promise<any> => {
+  const response = await axios.get(`${FINNHUB_REST_URL}/search`, {
+    params: { q: query, token: FINNHUB_API_KEY },
   });
   return response.data;
 };
 
+export const getPopularStocks = async (): Promise<any[]> => {
+  const symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'AMD', 'NFLX', 'DIS'];
+  const results = await Promise.allSettled(
+    symbols.map(async (s) => {
+      const quote = await getStockQuote(s);
+      return { ...quote, symbol: s };
+    }),
+  );
+  return results
+    .filter((r) => r.status === 'fulfilled')
+    .map((r) => (r as PromiseFulfilledResult<any>).value)
+    .filter((q) => q && q.c && q.c > 0);
+};
 export const getStockCandles = (
   symbol: string,
 ): { price: number; timestamp: string }[] => {

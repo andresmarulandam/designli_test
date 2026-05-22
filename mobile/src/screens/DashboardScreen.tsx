@@ -1,174 +1,244 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert, Modal, TouchableOpacity } from 'react-native';
-import { useStockStore } from '../store/stockStore';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { finnhubApi } from '../services/api';
+import { connectWebSocket, addPriceListener, subscribeToSymbol } from '../services/websocket';
 import { StockCard } from '../components/StockCard';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
 import { colors, spacing, borderRadius } from '../theme/colors';
-import type { StockPrice } from '../types';
+
+interface MarketStock {
+  symbol: string;
+  c: number;
+  d: number;
+  dp: number;
+  h: number;
+  l: number;
+  o: number;
+  pc: number;
+}
 
 export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const { stocks, prices, fetchStocks, addStock, removeStock, startRealTimeUpdates, stopRealTimeUpdates } = useStockStore();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [newSymbol, setNewSymbol] = useState('');
-  const [previousPrices, setPreviousPrices] = useState<Record<string, number>>({});
+  const [stocks, setStocks] = useState<MarketStock[]>([]);
+  const [prices, setPrices] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
 
-  useEffect(() => {
-    fetchStocks();
-    startRealTimeUpdates();
-
-    return () => {
-      stopRealTimeUpdates();
-    };
+  const fetchPopular = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await finnhubApi.getPopular();
+      setStocks(data);
+      data.forEach((s: MarketStock) => subscribeToSymbol(s.symbol));
+    } catch (error) {
+      console.error('Failed to fetch popular stocks:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    const handlePriceUpdate = (data: StockPrice) => {
-      setPreviousPrices((prev) => ({
-        ...prev,
-        [data.symbol]: prev[data.symbol] || prices[data.symbol] || data.price,
-      }));
+    fetchPopular();
+    connectWebSocket();
+
+    const unsubscribe = addPriceListener((data: { symbol: string; price: number }) => {
+      setPrices((prev) => ({ ...prev, [data.symbol]: data.price }));
+    });
+
+    return () => {
+      unsubscribe();
     };
+  }, [fetchPopular]);
 
-    return () => {};
-  }, [prices]);
+  useEffect(() => {
+    const timeout = setTimeout(async () => {
+      if (searchQuery.trim().length < 2) {
+        setSearchResults([]);
+        return;
+      }
+      setSearching(true);
+      try {
+        const { data } = await finnhubApi.search(searchQuery);
+        setSearchResults((data.result || []).filter((r: any) => r.type === 'Common Stock' || r.type === 'ETF'));
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setSearching(false);
+      }
+    }, 400);
 
-  const handleAddStock = async () => {
-    if (!newSymbol.trim()) return;
-    try {
-      await addStock(newSymbol.trim());
-      setNewSymbol('');
-      setModalVisible(false);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to add stock. It may already exist.');
-    }
-  };
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
 
   const handleStockPress = (symbol: string) => {
     navigation.navigate('StockDetail', { symbol });
   };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Dashboard</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
+  const currentPriceFor = (symbol: string, quoteC: number) =>
+    prices[symbol] || quoteC;
+
+  const renderStock = ({ item }: { item: MarketStock }) => (
+    <StockCard
+      stock={{ _id: item.symbol, symbol: item.symbol, userId: '' }}
+      currentPrice={currentPriceFor(item.symbol, item.c)}
+      previousPrice={item.pc}
+      onPress={() => handleStockPress(item.symbol)}
+    />
+  );
+
+  const renderSearchResult = ({ item }: { item: any }) => (
+    <TouchableOpacity
+      style={styles.searchResult}
+      onPress={() => {
+        setSearchQuery('');
+        setSearchResults([]);
+        handleStockPress(item.symbol);
+      }}
+    >
+      <View>
+        <Text style={styles.searchSymbol}>{item.symbol}</Text>
+        <Text style={styles.searchDescription} numberOfLines={1}>
+          {item.description}
+        </Text>
       </View>
+      <Text style={styles.searchType}>{item.type}</Text>
+    </TouchableOpacity>
+  );
 
-      {stocks.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No stocks yet</Text>
-          <Text style={styles.emptySubtext}>Tap + to add your first stock</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={stocks}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <StockCard
-              stock={item}
-              currentPrice={prices[item.symbol]}
-              previousPrice={previousPrices[item.symbol]}
-              onPress={() => handleStockPress(item.symbol)}
-              onRemove={() => removeStock(item._id)}
-            />
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Stocks</Text>
+
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search stocks..."
+            placeholderTextColor={colors.textSecondary}
+            autoCapitalize="characters"
+          />
+          {searching && (
+            <ActivityIndicator size="small" color={colors.primary} style={styles.searchSpinner} />
           )}
-          contentContainerStyle={styles.list}
-        />
-      )}
-
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add Stock</Text>
-            <Input
-              label="Symbol"
-              value={newSymbol}
-              onChangeText={setNewSymbol}
-              placeholder="e.g. AAPL, BINANCE:BTCUSDT"
-              autoCapitalize="characters"
-            />
-            <View style={styles.modalButtons}>
-              <Button title="Cancel" onPress={() => setModalVisible(false)} variant="outline" />
-              <Button title="Add" onPress={handleAddStock} />
-            </View>
-          </View>
         </View>
-      </Modal>
-    </View>
+
+        {searchQuery.trim().length >= 2 ? (
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item) => item.symbol}
+            renderItem={renderSearchResult}
+            contentContainerStyle={styles.list}
+            ListEmptyComponent={
+              !searching ? (
+                <Text style={styles.emptyText}>No results found</Text>
+              ) : null
+            }
+          />
+        ) : loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={stocks}
+            keyExtractor={(item) => item.symbol}
+            renderItem={renderStock}
+            contentContainerStyle={styles.list}
+            ListHeaderComponent={
+              <Text style={styles.sectionTitle}>Popular Stocks</Text>
+            }
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     padding: spacing.md,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
   title: {
     color: colors.textPrimary,
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: spacing.md,
   },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
+  searchContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
   },
-  addButtonText: {
-    color: colors.background,
-    fontSize: 24,
-    fontWeight: '700',
+  searchInput: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: 16,
+    paddingVertical: spacing.md,
+  },
+  searchSpinner: {
+    marginLeft: spacing.sm,
+  },
+  sectionTitle: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   list: {
     paddingBottom: spacing.md,
   },
-  emptyContainer: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptyText: {
-    color: colors.textPrimary,
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
-  },
-  emptySubtext: {
     color: colors.textSecondary,
     fontSize: 16,
+    textAlign: 'center',
+    marginTop: spacing.xl,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  modalContent: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-  },
-  modalTitle: {
-    color: colors.textPrimary,
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: spacing.md,
-  },
-  modalButtons: {
+  searchResult: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  searchSymbol: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  searchDescription: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: spacing.xs,
+    maxWidth: 200,
+  },
+  searchType: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    overflow: 'hidden',
   },
 });

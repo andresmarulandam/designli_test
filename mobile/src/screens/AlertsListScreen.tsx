@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlertStore } from '../store/alertStore';
 import { AlertCard } from '../components/AlertCard';
 import { colors, spacing } from '../theme/colors';
@@ -12,37 +13,43 @@ export const AlertsListScreen: React.FC<{ navigation: any }> = ({ navigation }) 
   }, []);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Price Alerts</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate('CreateAlert')}
-        >
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
-      </View>
-
-      {alerts.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No alerts yet</Text>
-          <Text style={styles.emptySubtext}>Tap + to create your first alert</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Price Alerts</Text>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('CreateAlert')}
+          >
+            <Text style={styles.addButtonText}>+</Text>
+          </TouchableOpacity>
         </View>
-      ) : (
-        <FlatList
-          data={alerts}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <AlertCard alert={item} onDelete={() => deleteAlert(item._id)} />
-          )}
-          contentContainerStyle={styles.list}
-        />
-      )}
-    </View>
+
+        {alerts.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No alerts yet</Text>
+            <Text style={styles.emptySubtext}>Tap + to create your first alert</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={alerts}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => (
+              <AlertCard alert={item} onDelete={() => deleteAlert(item._id)} />
+            )}
+            contentContainerStyle={styles.list}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
