@@ -1,10 +1,9 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_URL = 'http://10.0.2.2:3000/api';
+import { getApiUrl, initConfig } from '../config';
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: getApiUrl(),
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000,
 });
@@ -16,6 +15,11 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+export const initApi = async (): Promise<void> => {
+  await initConfig();
+  api.defaults.baseURL = getApiUrl();
+};
 
 export const authApi = {
   login: (email: string, password: string) =>

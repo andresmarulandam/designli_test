@@ -216,15 +216,22 @@ mobile/android/app/build/outputs/apk/debug/app-debug.apk
 
 ## Docker
 
+The entire stack (MongoDB + backend) can run in Docker:
+
 ```bash
-# Start MongoDB
-docker compose up -d
+# Build and start all services
+docker compose up --build -d
+
+# View logs
+docker compose logs -f
 
 # Stop
 docker compose down
 ```
 
-The backend itself can also be containerized (not included in this version).
+The backend is built from `backend/Dockerfile` (multi-stage, production-ready). MongoDB data persists in a named volume.
+
+> **Note:** Firebase service account (`firebase-service-account.json`) is mounted as a read-only volume at runtime — it is not baked into the image.
 
 ---
 

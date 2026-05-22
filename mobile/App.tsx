@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { LogBox } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { LogBox, ActivityIndicator, View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { useAuthStore } from './src/store/authStore';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { registerForPushNotifications, setupNotificationListeners } from './src/services/fcm';
+import { initApi } from './src/services/api';
 import { colors } from './src/theme/colors';
 
 LogBox.ignoreLogs([
@@ -17,9 +18,14 @@ LogBox.ignoreLogs([
 
 export default function App() {
   const { isAuthenticated, loadStoredAuth } = useAuthStore();
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    loadStoredAuth();
+    (async () => {
+      await initApi();
+      await loadStoredAuth();
+      setReady(true);
+    })();
   }, []);
 
   useEffect(() => {
@@ -28,6 +34,14 @@ export default function App() {
       setupNotificationListeners();
     }
   }, [isAuthenticated]);
+
+  if (!ready) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>
@@ -38,3 +52,12 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+});
