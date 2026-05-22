@@ -1,12 +1,16 @@
+import { getWsUrl } from '../config';
+
 type PriceCallback = (data: { symbol: string; price: number; timestamp: string }) => void;
 
 let ws: WebSocket | null = null;
 const callbacks: Set<PriceCallback> = new Set();
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const connectWebSocket = () => {
   if (ws && ws.readyState === WebSocket.OPEN) return;
 
-  ws = new WebSocket('ws://10.0.2.2:3000/ws/stocks');
+  const url = getWsUrl();
+  ws = new WebSocket(url);
 
   ws.onopen = () => {
     console.log('WebSocket connected');
@@ -27,7 +31,8 @@ export const connectWebSocket = () => {
 
   ws.onclose = () => {
     console.log('WebSocket disconnected. Reconnecting...');
-    setTimeout(connectWebSocket, 5000);
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(connectWebSocket, 5000);
   };
 };
 
@@ -45,6 +50,7 @@ export const addPriceListener = (callback: PriceCallback) => {
 };
 
 export const disconnectWebSocket = () => {
+  if (reconnectTimer) clearTimeout(reconnectTimer);
   if (ws) {
     ws.close();
     ws = null;
